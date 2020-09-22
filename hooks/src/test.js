@@ -1,88 +1,100 @@
-import React from 'react'
-import {
-  SchemaForm,
-  SchemaMarkupField as Field,
-  useFormTableQuery,
-  FormButtonGroup,
-  Submit,
-  Reset
-} from '@formily/next'
-import { Input } from '@formily/next-components'
-import { fetch } from 'mfetch'
-import { Table, Pagination } from '@alifd/next'
+import React from 'react';
+import { Table, Pagination, Field, Form, Input, Button, Select, Icon } from '@alifd/next';
+import { useFusionTable } from 'ahooks';
 
-const service = ({ values, pagination, sorter = {}, filters = {} }) => {
-  return fetch({
-    url: 'https://randomuser.me/api',
-    data: {
-      results: pagination.pageSize,
-      sortField: sorter.field,
-      sortOrder: sorter.order,
-      page: pagination.current,
-      ...values,
-      ...filters
+const getTableData = ({ current, pageSize }, formData) => {
+  let query = `page=${current}&size=${pageSize}`;
+  Object.entries(formData).forEach(([key, value]) => {
+    if (value) {
+      query += `&${key}=${value}`;
     }
-  })
-    .then(res => res.json())
-    .then(({ results, info }) => {
-      return {
-        dataSource: results,
-        ...pagination,
-        total: 200
-      }
-    })
-}
-
- function App (){
-  const { form, table, pagination } = useFormTableQuery(service)
-  const submit = ()=>{
-    console.log(form.effects,table,888)
-    table.onFilter()
-    // form.effects(()=>{},()=>{
-    //   console.log(123123)
-    // })
-   
-  }
+  });
+  return fetch(`https://randomuser.me/api?results=${pageSize}&${query}`)
+    .then((res) => res.json())
+    .then((res) => ({
+      total: 55,
+      list: res.results.slice(0, 10),
+    }));
+};
+const AppList = () => {
+  const field = Field.useField([]);
+  const { paginationProps, tableProps, search, loading } = useFusionTable(getTableData, {
+    field,
+  });
+  const { type, changeType, submit, reset } = search;
+  const advanceSearchForm = (
+    <div>
+      <Form
+        inline
+        style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}
+        field={field}
+      >
+        <Form.Item label="name:">
+          <Input name="name" placeholder="name" />
+        </Form.Item>
+        <Form.Item label="email:">
+          <Input name="email" placeholder="email" />
+        </Form.Item>
+        <Form.Item label="phone:">
+          <Input name="phone" placeholder="phone" />
+        </Form.Item>
+        <Form.Item label=" ">
+          <Form.Submit loading={loading} type="primary" onClick={submit}>
+            Search
+          </Form.Submit>
+        </Form.Item>
+        <Form.Item label=" ">
+          <Button onClick={reset}>reset</Button>
+        </Form.Item>
+        <Form.Item label=" ">
+          <Button text type="primary" onClick={changeType}>
+            Simple Search
+          </Button>
+        </Form.Item>
+      </Form>
+    </div>
+  );
+  const searchForm = (
+    <div>
+      <Form
+        inline
+        style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}
+        field={field}
+      >
+        <Form.Item label=" ">
+          <Select name="gender" defaultValue="all" onChange={submit}>
+            <Select.Option value="all">all</Select.Option>
+            <Select.Option value="male">male</Select.Option>
+            <Select.Option value="female">female</Select.Option>
+          </Select>
+        </Form.Item>
+        <Form.Item label=" ">
+          <Input
+            name="name"
+            innerAfter={<Icon type="search" size="xs" onClick={submit} style={{ margin: 4 }} />}
+            placeholder="enter name"
+            onPressEnter={submit}
+          />
+        </Form.Item>
+        <Form.Item label=" ">
+          <Button text type="primary" onClick={changeType}>
+            Advanced Search
+          </Button>
+        </Form.Item>
+      </Form>
+    </div>
+  );
   return (
     <>
-      <SchemaForm
-        {...form}
-        components={{ Input }}
-        style={{ marginBottom: 20 }}
-        inline
-      >
-        <Field type="string" name="name" title="Name" x-component="Input" />
-        <FormButtonGroup>
-          <Submit>查询</Submit>
-          <Reset>重置</Reset>
-        </FormButtonGroup>
-      </SchemaForm>
-      <Table {...table} hasBorder={true}  rowKey={record => record.login.uuid}>
-        <Table.Column
-          sortable
-          title="name"
-          dataIndex="name"
-          cell={(val, idx, record) => {
-            return <Submit onClick={submit}></Submit>
-          }}
-        />
-        <Table.Column
-          filters={[
-            { label: 'male', value: 'male' },
-            { label: 'female', value: 'female' }
-          ]}
-          title="gender"
-          dataIndex="gender"
-        />
-        <Table.Column title="email" dataIndex="email" />
+      {type === 'simple' ? searchForm : advanceSearchForm}
+      <Table {...tableProps} primaryKey="email">
+        <Table.Column title="name" dataIndex="name.last" width={140} />
+        <Table.Column title="email" dataIndex="email" width={500} />
+        <Table.Column title="phone" dataIndex="phone" width={500} />
+        <Table.Column title="gender" dataIndex="gender" width={500} />
       </Table>
-      <Pagination
-        {...pagination}
-        style={{ marginTop: 10 }}
-        pageSizeSelector="filter"
-      />
+      <Pagination style={{ marginTop: 16 }} {...paginationProps} />
     </>
-  )
-}
-
-export default App
+  );
+};
+export default AppList;

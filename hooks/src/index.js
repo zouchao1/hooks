@@ -2,6 +2,7 @@ import React,{useState} from 'react';
 import ReactDOM from 'react-dom';
 import App from './App';
 import * as serviceWorker from './serviceWorker';
+import Test from './test'
 import useContext from './utils/useContext'
 import { data } from './utils/useState'
 
@@ -27,6 +28,7 @@ export default function render() {
   data.index = 0
   ReactDOM.render(
     <App />
+    // <Test/>
     ,
     document.getElementById('root')
   );
