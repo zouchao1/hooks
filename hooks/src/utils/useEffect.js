@@ -7,8 +7,6 @@ function useEffect(callback,dependencies){
         if (!changed) {
             setTimeout(callback)
             lastDependencies = dependencies
-           
-
         }
     }else{
         setTimeout(callback)
